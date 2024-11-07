@@ -79,9 +79,6 @@ class EventHandler(AssistantEventHandler):
     def on_text_done(self, text):
         format_text = format_annotation(text)
 
-        # Use regex to remove source citations
-        # format_text = re.sub('【.*?†source】', '', text)
-
         st.session_state.current_markdown.markdown(format_text, True)
         st.session_state.chat_log.append({"name": "assistant", "msg": format_text})
 
@@ -258,8 +255,7 @@ def reset_chat():
 
 def load_chat_screen(assistant_id, assistant_title):
 
-    subtitle_warning = "Daniel DeBot is actively in development. Outputs should be manually reviewed."
-    # st.sidebar.text("Daniel DeBot is actively in development. Outputs should be manually reviewed.")
+    subtitle_warning = f"{assistant_title} is actively in development. Outputs should be manually reviewed."
 
     if False:
         uploaded_file = st.sidebar.file_uploader(
