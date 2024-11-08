@@ -1,6 +1,6 @@
 [theme]
-primaryColor = "#4a90e2"            # Custom primary color for buttons and highlights
-backgroundColor = "#f0f2f6"         # Background color of the app
-secondaryBackgroundColor = "#e8ebf1" # Background color for sidebar and widgets
-textColor = "#31333f"               # Text color for main content
+primaryColor = "#FF0000"            # Custom primary color for buttons and highlights
+backgroundColor = "#FF0000"         # Background color of the app
+secondaryBackgroundColor = "#FF0000" # Background color for sidebar and widgets
+textColor = "#FF0000"               # Text color for main content
 font = "sans serif"                 # Font family (options: sans serif, serif, monospace)
