@@ -15,6 +15,12 @@ from streamlit.components.v1 import html
 from tools import TOOL_MAP
 from typing_extensions import override
 
+st.set_page_config(
+        page_title="Daniel DeBot",
+        layout="wide",
+        initial_sidebar_state="expanded"  # This line expands the sidebar by default
+    )
+
 load_dotenv()
 
 def str_to_bool(str_input):
@@ -304,6 +310,7 @@ def load_chat_screen(assistant_id, assistant_title):
 
 
 def main():
+
     # JavaScript for auto-scrolling
     scroll_script = """
         <script>
@@ -363,7 +370,7 @@ def send_email_log(log_content):
     msg.attach(MIMEText(log_content, "plain"))
 
     try:
-        with smtplib.SMTP("smtp.example.com", 587) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
             server.login(sender_email, password)
             server.sendmail(sender_email, receiver_email, msg.as_string())
@@ -371,10 +378,15 @@ def send_email_log(log_content):
     except Exception as e:
         st.sidebar.error(f"Failed to send email: {e}")
 
+
 # Sidebar button to send conversation log
-if st.sidebar.button("Send to logging"):
+st.sidebar.write("If responses are not accurate, please use the button below to log your recent chat history.")
+user_comment = st.sidebar.text_input("Optional Comments", placeholder="Enter your comments here...")
+if st.sidebar.button("Log Chat History"):
     # Assume `conversation_log` is a variable that stores the current conversation
-    conversation_log = "Your conversation log goes here."  # Placeholder
+    conversation_log = st.session_state.chat_log
+    if user_comment:
+        conversation_log = f"{conversation_log}\n\nUser comments:\n{user_comment}"
     send_email_log(conversation_log)
 
 
