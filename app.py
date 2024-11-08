@@ -3,10 +3,13 @@ import base64
 import re
 import json
 import openai
+import smtplib
 import streamlit as st
 import streamlit_authenticator as stauth
 
 from dotenv import load_dotenv
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from openai import AssistantEventHandler
 from streamlit.components.v1 import html
 from tools import TOOL_MAP
@@ -29,6 +32,9 @@ enabled_file_upload_message = os.environ.get(
 azure_openai_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
 azure_openai_key = os.environ.get("AZURE_OPENAI_KEY")
 authentication_required = str_to_bool(os.environ.get("AUTHENTICATION_REQUIRED", False))
+email_address = os.environ.get("email_address")
+storage_email_address = os.environ.get("storage_email_address")
+email_password = os.environ.get("email_password")
 
 # Load authentication configuration
 if authentication_required:
@@ -343,6 +349,33 @@ def main():
         load_chat_screen(single_agent_id, single_agent_title)
     else:
         st.error("No assistant configurations defined in environment variables.")
+
+
+def send_email_log(log_content):
+    sender_email = email_address
+    receiver_email = storage_email_address
+    password = os.getenv("email_password")
+
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+    msg["Subject"] = "Rusty Data Manual User Log"
+    msg.attach(MIMEText(log_content, "plain"))
+
+    try:
+        with smtplib.SMTP("smtp.example.com", 587) as server:
+            server.starttls()
+            server.login(sender_email, password)
+            server.sendmail(sender_email, receiver_email, msg.as_string())
+            st.sidebar.success("Email sent successfully!")
+    except Exception as e:
+        st.sidebar.error(f"Failed to send email: {e}")
+
+# Sidebar button to send conversation log
+if st.sidebar.button("Send to logging"):
+    # Assume `conversation_log` is a variable that stores the current conversation
+    conversation_log = "Your conversation log goes here."  # Placeholder
+    send_email_log(conversation_log)
 
 
 if __name__ == "__main__":
