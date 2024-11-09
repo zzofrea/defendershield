@@ -6,14 +6,22 @@ import openai
 import smtplib
 import streamlit as st
 import streamlit_authenticator as stauth
+import toml
 
 from dotenv import load_dotenv
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 from openai import AssistantEventHandler
 from streamlit.components.v1 import html
 from tools import TOOL_MAP
 from typing_extensions import override
+
+
+# Load the .toml file as a dictionary
+with open(".streamlit/secrets.toml", "r") as f:
+    service_account_info = toml.load(f)["service_account"]
 
 st.set_page_config(
         page_title="Daniel DeBot",
@@ -379,15 +387,109 @@ def send_email_log(log_content):
         st.sidebar.error(f"Failed to send email: {e}")
 
 
+def update_logging_google_doc(conversation_log):
+    # Create credentials from the service account info
+    credentials = service_account.Credentials.from_service_account_info(
+        service_account_info, scopes=["https://www.googleapis.com/auth/documents"]
+    )
+
+    # Initialize the Google Docs API client
+    service = build("docs", "v1", credentials=credentials)
+
+    # Example of appending text to an existing document
+    DOCUMENT_ID = "1kei8AwNcHjUPimASzCn26AWyiOsMb42ZnJUd4NXhi4w"  # Replace with your actual document ID
+
+    # Retrieve the document to find the last index
+    # Call the function to insert text
+    requests = insert_text(conversation_log=conversation_log)
+
+    service.documents().batchUpdate(
+        documentId=DOCUMENT_ID, body={"requests": requests}
+    ).execute()
+
+    print("Content appended successfully!")
+
+
+# Define function to add content to Google Docs
+def insert_text(conversation_log):
+    doc_structure = [{"type": "header", "text": "START OF LOG"}]
+    for content in conversation_log:
+        print(type(conversation_log))
+        print(conversation_log)
+        print("zz")
+        print(content)
+        current_message_sender = content["name"]
+        current_message = content["msg"]
+        doc_structure.append({"type": "paragraph", "text": current_message_sender})
+        doc_structure.append({"type": "paragraph", "text": current_message})
+
+    doc_structure.append({"type": "header", "text": "END OF LOG\n\n\n"})
+    requests = []
+
+    for item in reversed(doc_structure):
+        if item["text"] in ("user", "assistant"):
+            # Insert bold header text
+            requests.append(
+                {
+                    "insertText": {
+                        "location": {"index": 1},
+                        "text": item["text"] + ":\n",
+                    }
+                }
+            )
+            requests.append(
+                {
+                    "updateTextStyle": {
+                        "range": {
+                            "startIndex": 1,
+                            "endIndex": 1 + len(item["text"]),
+                        },
+                        "textStyle": {"bold": True},
+                        "fields": "bold",
+                    }
+                }
+            )
+        elif item["type"] in ["paragraph", "header"]:
+            # Regular paragraph text
+            requests.append(
+                {
+                    "insertText": {
+                        "location": {"index": 1},
+                        "text": item["text"] + "\n\n",
+                    }
+                }
+            )
+            requests.append(
+                {
+                    "updateTextStyle": {
+                        "range": {
+                            "startIndex": 1,
+                            "endIndex": 1 + len(item["text"]),
+                        },
+                        "textStyle": {"bold": False},
+                        "fields": "bold",
+                    }
+                }
+            )
+
+    return requests
+
+
 # Sidebar button to send conversation log
 st.sidebar.write("If responses are not accurate, please use the button below to log your recent chat history.")
 user_comment = st.sidebar.text_input("Optional Comments", placeholder="Enter your comments here...")
 if st.sidebar.button("Log Chat History"):
     # Assume `conversation_log` is a variable that stores the current conversation
     conversation_log = st.session_state.chat_log
+
+    update_logging_google_doc(conversation_log)
+
     if user_comment:
-        conversation_log = f"{conversation_log}\n\nUser comments:\n{user_comment}"
-    send_email_log(conversation_log)
+        comment_append_conversation_log = f"{conversation_log}\n\nUser comments:\n{user_comment}"
+    else:
+        comment_append_conversation_log = conversation_log
+    send_email_log(comment_append_conversation_log)
+
 
 
 if __name__ == "__main__":
