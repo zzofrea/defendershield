@@ -7,7 +7,7 @@ import smtplib
 import streamlit as st
 import streamlit_authenticator as stauth
 import toml
-
+from datetime import datetime
 from dotenv import load_dotenv
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -412,7 +412,12 @@ def update_logging_google_doc(conversation_log):
 
 # Define function to add content to Google Docs
 def insert_text(conversation_log):
-    doc_structure = [{"type": "header", "text": "START OF LOG"}]
+    # Get current date and time
+    current_datetime = datetime.now()
+
+    print("Current date and time:", current_datetime)
+
+    doc_structure = [{"type": "header", "text": f"START OF LOG: {current_datetime}"}]
     for content in conversation_log:
         print(type(conversation_log))
         print(conversation_log)
