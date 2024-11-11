@@ -375,7 +375,7 @@ def send_email_log(log_content):
     msg["From"] = sender_email
     msg["To"] = receiver_email
     msg["Subject"] = "Rusty Data Manual User Log"
-    msg.attach(MIMEText(log_content, "plain"))
+    msg.attach(MIMEText(log_content, "plain", "utf-8"))
 
     try:
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
