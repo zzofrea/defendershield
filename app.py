@@ -506,7 +506,9 @@ def instantiate_user_logging():
             comment_append_conversation_log = f"{conversation_log}\n\nUser comments:\n{user_comment}"
         else:
             comment_append_conversation_log = conversation_log
-        send_email_log(comment_append_conversation_log)
+
+        if email_address and email_password and storage_email_address:
+            send_email_log(comment_append_conversation_log)
 
     return
 
