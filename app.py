@@ -378,7 +378,8 @@ def send_email_log(log_content):
 
     log_content = log_content.encode("utf-8").decode("utf-8")
     log_content = re.sub(r'[^\x20-\x7E]+', '', log_content)  # Removes non-ASCII characters
-    msg.attach(MIMEText(log_content, "plain", "utf-8"))
+    log_content = str(log_content)
+    sg.attach(MIMEText(log_content, "plain", "utf-8"))
 
     try:
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
