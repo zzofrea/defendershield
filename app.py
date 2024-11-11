@@ -6,6 +6,7 @@ import openai
 import smtplib
 import streamlit as st
 import streamlit_authenticator as stauth
+import traceback
 import toml
 from datetime import datetime
 from dotenv import load_dotenv
@@ -376,13 +377,14 @@ def send_email_log(log_content):
     msg["To"] = receiver_email
     msg["Subject"] = "Rusty Data Manual User Log"
     print("ZZ TYPE: {type(log_content)}")
-    log_content = str(log_content)
-    log_content = log_content.encode("utf-8").decode("utf-8")
-    log_content = re.sub(r'[^\x20-\x7E]+', '', log_content)  # Removes non-ASCII characters
-
-    msg.attach(MIMEText(log_content, "plain", "utf-8"))
 
     try:
+        log_content = str(log_content)
+        log_content = log_content.encode("utf-8").decode("utf-8")
+        log_content = re.sub(r'[^\x20-\x7E]+', '', log_content)  # Removes non-ASCII characters
+
+        msg.attach(MIMEText(log_content, "plain", "utf-8"))
+
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
             server.login(sender_email, password)
@@ -390,7 +392,11 @@ def send_email_log(log_content):
             st.sidebar.success("Email sent successfully!")
     except Exception as e:
         current_datetime = datetime.now()
-        server.sendmail(sender_email, receiver_email, f"DeBot LOGGING ERROR REPORT AT {current_datetime}\n\n {e}")
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(sender_email, password)
+            traceback_report = traceback.format_exc()
+            server.sendmail(sender_email, receiver_email, f"DeBot LOGGING ERROR REPORT AT {current_datetime}\n\n {e}\n\nTRACEBACK:\n{traceback_report}")
         # st.sidebar.error(f"Failed to send email: {e}")
         st.sidebar.success("EMAIL REPORT NOT SENT. The root cause of this error has been reported for investigation.")
 
