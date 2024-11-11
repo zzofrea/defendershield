@@ -375,6 +375,9 @@ def send_email_log(log_content):
     msg["From"] = sender_email
     msg["To"] = receiver_email
     msg["Subject"] = "Rusty Data Manual User Log"
+
+    log_content = log_content.encode("utf-8").decode("utf-8")
+    log_content = re.sub(r'[^\x20-\x7E]+', '', log_content)  # Removes non-ASCII characters
     msg.attach(MIMEText(log_content, "plain", "utf-8"))
 
     try:
