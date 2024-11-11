@@ -50,6 +50,7 @@ authentication_required = str_to_bool(os.environ.get("AUTHENTICATION_REQUIRED", 
 email_address = os.environ.get("email_address")
 storage_email_address = os.environ.get("storage_email_address")
 email_password = os.environ.get("email_password")
+LOGGING_WORD_DOC_ID = "1kei8AwNcHjUPimASzCn26AWyiOsMb42ZnJUd4NXhi4w"
 
 # Load authentication configuration
 if authentication_required:
@@ -63,7 +64,6 @@ if authentication_required:
     else:
         authenticator = None  # No authentication should be performed
 
-client = None
 if azure_openai_endpoint and azure_openai_key:
     client = openai.AzureOpenAI(
         api_key=azure_openai_key,
@@ -400,6 +400,7 @@ def send_email_log(log_content):
         # st.sidebar.error(f"Failed to send email: {e}")
         st.sidebar.success("EMAIL REPORT NOT SENT. The root cause of this error has been reported for investigation.")
 
+
 def update_logging_google_doc(conversation_log):
     # Create credentials from the service account info
     credentials = service_account.Credentials.from_service_account_info(
@@ -410,14 +411,13 @@ def update_logging_google_doc(conversation_log):
     service = build("docs", "v1", credentials=credentials)
 
     # Example of appending text to an existing document
-    DOCUMENT_ID = "1kei8AwNcHjUPimASzCn26AWyiOsMb42ZnJUd4NXhi4w"  # Replace with your actual document ID
-
+    LOGGING_WORD_DOC_ID
     # Retrieve the document to find the last index
     # Call the function to insert text
     requests = insert_text(conversation_log=conversation_log)
 
     service.documents().batchUpdate(
-        documentId=DOCUMENT_ID, body={"requests": requests}
+        documentId=LOGGING_WORD_DOC_ID, body={"requests": requests}
     ).execute()
 
     print("Content appended successfully!")
@@ -432,10 +432,6 @@ def insert_text(conversation_log):
 
     doc_structure = [{"type": "header", "text": f"START OF LOG: {current_datetime}"}]
     for content in conversation_log:
-        print(type(conversation_log))
-        print(conversation_log)
-        print("zz")
-        print(content)
         current_message_sender = content["name"]
         current_message = content["msg"]
         doc_structure.append({"type": "paragraph", "text": current_message_sender})
