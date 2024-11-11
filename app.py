@@ -375,11 +375,12 @@ def send_email_log(log_content):
     msg["From"] = sender_email
     msg["To"] = receiver_email
     msg["Subject"] = "Rusty Data Manual User Log"
-
+    print("ZZ TYPE: {type(log_content)}")
+    log_content = str(log_content)
     log_content = log_content.encode("utf-8").decode("utf-8")
     log_content = re.sub(r'[^\x20-\x7E]+', '', log_content)  # Removes non-ASCII characters
-    log_content = str(log_content)
-    sg.attach(MIMEText(log_content, "plain", "utf-8"))
+
+    msg.attach(MIMEText(log_content, "plain", "utf-8"))
 
     try:
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
@@ -388,8 +389,10 @@ def send_email_log(log_content):
             server.sendmail(sender_email, receiver_email, msg.as_string())
             st.sidebar.success("Email sent successfully!")
     except Exception as e:
-        st.sidebar.error(f"Failed to send email: {e}")
-
+        current_datetime = datetime.now()
+        server.sendmail(sender_email, receiver_email, f"DeBot LOGGING ERROR REPORT AT {current_datetime}\n\n {e}")
+        # st.sidebar.error(f"Failed to send email: {e}")
+        st.sidebar.success("EMAIL REPORT NOT SENT. The root cause of this error has been reported for investigation.")
 
 def update_logging_google_doc(conversation_log):
     # Create credentials from the service account info
