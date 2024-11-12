@@ -51,6 +51,9 @@ email_address = os.environ.get("email_address")
 storage_email_address = os.environ.get("storage_email_address")
 email_password = os.environ.get("email_password")
 
+enable_logging = os.environ.get("enable_logging")
+logging_word_doc_id = os.environ.get("logging_word_doc_id")
+
 # Load authentication configuration
 if authentication_required:
     if "credentials" in st.secrets:
@@ -63,7 +66,6 @@ if authentication_required:
     else:
         authenticator = None  # No authentication should be performed
 
-client = None
 if azure_openai_endpoint and azure_openai_key:
     client = openai.AzureOpenAI(
         api_key=azure_openai_key,
@@ -320,6 +322,11 @@ def load_chat_screen(assistant_id, assistant_title):
 
 def main():
 
+    if enable_logging == "True":
+        instantiate_user_logging()
+    else:
+        pass
+
     # JavaScript for auto-scrolling
     scroll_script = """
         <script>
@@ -376,7 +383,6 @@ def send_email_log(log_content):
     msg["From"] = sender_email
     msg["To"] = receiver_email
     msg["Subject"] = "Rusty Data Manual User Log"
-    print("ZZ TYPE: {type(log_content)}")
 
     try:
         log_content = str(log_content)
@@ -400,6 +406,7 @@ def send_email_log(log_content):
         # st.sidebar.error(f"Failed to send email: {e}")
         st.sidebar.success("EMAIL REPORT NOT SENT. The root cause of this error has been reported for investigation.")
 
+
 def update_logging_google_doc(conversation_log):
     # Create credentials from the service account info
     credentials = service_account.Credentials.from_service_account_info(
@@ -409,15 +416,12 @@ def update_logging_google_doc(conversation_log):
     # Initialize the Google Docs API client
     service = build("docs", "v1", credentials=credentials)
 
-    # Example of appending text to an existing document
-    DOCUMENT_ID = "1kei8AwNcHjUPimASzCn26AWyiOsMb42ZnJUd4NXhi4w"  # Replace with your actual document ID
-
     # Retrieve the document to find the last index
     # Call the function to insert text
     requests = insert_text(conversation_log=conversation_log)
 
     service.documents().batchUpdate(
-        documentId=DOCUMENT_ID, body={"requests": requests}
+        documentId=logging_word_doc_id, body={"requests": requests}
     ).execute()
 
     print("Content appended successfully!")
@@ -428,14 +432,8 @@ def insert_text(conversation_log):
     # Get current date and time
     current_datetime = datetime.now()
 
-    print("Current date and time:", current_datetime)
-
     doc_structure = [{"type": "header", "text": f"START OF LOG: {current_datetime}"}]
     for content in conversation_log:
-        print(type(conversation_log))
-        print(conversation_log)
-        print("zz")
-        print(content)
         current_message_sender = content["name"]
         current_message = content["msg"]
         doc_structure.append({"type": "paragraph", "text": current_message_sender})
@@ -493,21 +491,26 @@ def insert_text(conversation_log):
     return requests
 
 
-# Sidebar button to send conversation log
-st.sidebar.write("If responses are not accurate, please use the button below to log your recent chat history.")
-user_comment = st.sidebar.text_input("Optional Comments", placeholder="Enter your comments here...")
-if st.sidebar.button("Log Chat History"):
-    # Assume `conversation_log` is a variable that stores the current conversation
-    conversation_log = st.session_state.chat_log
+def instantiate_user_logging():
+    # Sidebar button to send conversation log
+    st.sidebar.write("If responses are not accurate, please use the button below to log your recent chat history.")
+    user_comment = st.sidebar.text_input("Optional Comments", placeholder="Enter your comments here...")
+    if st.sidebar.button("Log Chat History"):
+        # Assume `conversation_log` is a variable that stores the current conversation
+        conversation_log = st.session_state.chat_log
 
-    update_logging_google_doc(conversation_log)
+        if logging_word_doc_id:
+            update_logging_google_doc(conversation_log)
 
-    if user_comment:
-        comment_append_conversation_log = f"{conversation_log}\n\nUser comments:\n{user_comment}"
-    else:
-        comment_append_conversation_log = conversation_log
-    send_email_log(comment_append_conversation_log)
+        if user_comment:
+            comment_append_conversation_log = f"{conversation_log}\n\nUser comments:\n{user_comment}"
+        else:
+            comment_append_conversation_log = conversation_log
 
+        if email_address and email_password and storage_email_address:
+            send_email_log(comment_append_conversation_log)
+
+    return
 
 
 if __name__ == "__main__":
