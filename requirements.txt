@@ -86,7 +86,7 @@ streamlit==1.39.0
 streamlit-authenticator==0.4.1
 tenacity==9.0.0
 toml==0.10.2
-tornado==6.4.1
+tornado==6.4.2
 tqdm==4.67.0
 traitlets==5.14.3
 trio==0.27.0
