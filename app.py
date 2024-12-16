@@ -73,8 +73,7 @@ if azure_openai_endpoint and azure_openai_key:
         azure_endpoint=azure_openai_endpoint,
     )
 else:
-    client = openai.OpenAI()
-    openai.api_key = openai_api_key
+    client = openai.OpenAI(api_key=openai_api_key)
 
 
 class EventHandler(AssistantEventHandler):
